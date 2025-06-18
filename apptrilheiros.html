@@ -1,0 +1,382 @@
+import React, { useState, useEffect } from 'react';
+
+// Dados do quiz, níveis de viajante e pacotes de viagem
+const quizData = [
+  {
+    question: "Qual o seu ritmo ideal de viagem?",
+    options: [
+      { text: "Relaxado, sem pressa", points: 1, type: "pace" },
+      { text: "Moderado, com algumas atividades", points: 2, type: "pace" },
+      { text: "Intenso, quero ver tudo!", points: 3, type: "pace" },
+    ],
+  },
+  {
+    question: "Que tipo de hospedagem você prefere?",
+    options: [
+      { text: "Conforto e luxo", points: 3, type: "accommodation" },
+      { text: "Confortável e aconchegante", points: 2, type: "accommodation" },
+      { text: "Econômica e funcional", points: 1, type: "accommodation" },
+    ],
+  },
+  {
+    question: "Qual sua atividade preferida em uma viagem?",
+    options: [
+      { text: "Natureza e aventura (trilhas, cachoeiras)", points: 3, type: "activity" },
+      { text: "Cultura e história (museus, sítios históricos)", points: 2, type: "activity" },
+      { text: "Compras e vida urbana (cidades grandes)", points: 1, type: "activity" },
+    ],
+  },
+  {
+    question: "Qual o seu nível de interesse em vida noturna?",
+    options: [
+      { text: "Muito importante, adoro festas e bares", points: 3, type: "nightlife" },
+      { text: "Moderado, gosto de sair algumas vezes", points: 2, type: "nightlife" },
+      { text: "Não ligo muito, prefiro descansar", points: 1, type: "nightlife" },
+    ],
+  },
+  {
+    question: "Qual a sua faixa de orçamento para esta viagem?",
+    options: [
+      { text: "Baixo", points: 1, type: "budget" },
+      { text: "Médio", points: 2, type: "budget" },
+      { text: "Alto", points: 3, type: "budget" },
+    ],
+  },
+];
+
+// Definição dos níveis de viajante
+const travelerLevels = [
+  {
+    name: "Aventureiro Iniciante",
+    description: "Você está começando a explorar o mundo das viagens e prefere experiências mais tranquilas e confortáveis. A segurança e o planejamento são prioridades para você. Que tal começar com destinos que ofereçam contato com a natureza de forma leve?",
+    minPoints: 0,
+    maxPoints: 5,
+  },
+  {
+    name: "Explorador Curioso",
+    description: "Você gosta de desvendar novos lugares e culturas, com um bom equilíbrio entre aventura e conforto. Está aberto a novas experiências, mas com um bom planejamento prévio. Destinos com rica história e beleza natural moderada são ideais.",
+    minPoints: 6,
+    maxPoints: 10,
+  },
+  {
+    name: "Viajante Destemido",
+    description: "Você é movido por desafios e experiências autênticas. Não tem medo de sair da sua zona de conforto e adora explorar lugares menos convencionais. Aventuras intensas e imersão cultural são o seu forte!",
+    minPoints: 11,
+    maxPoints: 15,
+  },
+  {
+    name: "Nômade Raiz",
+    description: "Você vive para viajar, é um verdadeiro especialista em desbravar o mundo de forma independente e imersiva. Cada viagem é uma jornada de autoconhecimento e conexão profunda com o ambiente. Você busca o inusitado e o genuíno.",
+    minPoints: 16,
+    maxPoints: 20,
+  },
+];
+
+// Pacotes de viagem predefinidos
+const travelPackages = [
+  {
+    id: 'p1',
+    name: "Caminhada Leve na Mata Atlântica",
+    description: "Ideal para iniciantes, trilhas acessíveis com paisagens deslumbrantes e guias experientes. Hospedagem confortável e atividades relaxantes.",
+    level: "Aventureiro Iniciante",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Caminhada Leve na Mata Atlântica'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p2',
+    name: "Roteiro Histórico em Ouro Preto",
+    description: "Explore a riqueza cultural e arquitetônica de Ouro Preto, Patrimônio Mundial da UNESCO. Visitas guiadas a igrejas barrocas, museus e ateliês de arte. Hospedagem charmosa no centro histórico.",
+    level: "Explorador Curioso",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Roteiro Histórico em Ouro Preto'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p3',
+    name: "Expedição de Trekking na Chapada Diamantina",
+    description: "Aventure-se pelas cachoeiras, grutas e vales da Chapada Diamantina. Trekking moderado a intenso, com pernoite em acampamentos ou pousadas rústicas. Experiência inesquecível para os amantes da natureza.",
+    level: "Viajante Destemido",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Expedição de Trekking na Chapada Diamantina'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p4',
+    name: "Volta de Mochila pela América do Sul",
+    description: "Uma jornada épica para o Nômade Raiz! Explore diversos países da América do Sul com flexibilidade, adaptando o roteiro aos seus interesses. Aventura, cultura e liberdade em um só pacote.",
+    level: "Nômade Raiz",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Volta de Mochila pela América do Sul'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p5',
+    name: "Férias no paraíso: Praia do Forte",
+    description: "Desfrute de dias ensolarados e relaxantes na Praia do Forte. Com resorts de luxo e atividades aquáticas, é perfeito para quem busca tranquilidade e diversão em um cenário paradisíaco.",
+    level: "Aventureiro Iniciante",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Férias no paraíso: Praia do Forte'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p6',
+    name: "Rota Ecológica de Alagoas",
+    description: "Mergulhe nas belezas intocadas da Rota Ecológica de Alagoas, com praias desertas, piscinas naturais e coqueirais. Hospedagens charmosas e gastronomia local.",
+    level: "Explorador Curioso",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Rota Ecológica de Alagoas'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p7',
+    name: "Aventura na Amazônia: Selva e Rios",
+    description: "Explore a maior floresta tropical do mundo em uma imersão na Amazônia. Trilhas na selva, passeios de canoa, observação de vida selvagem e contato com comunidades locais. Uma experiência transformadora.",
+    level: "Viajante Destemido",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Aventura na Amazônia: Selva e Rios'. Poderiam me dar mais informações?",
+  },
+  {
+    id: 'p8',
+    name: "Expedição Patagônia: Geleiras e Montanhas",
+    description: "Para os mais audaciosos, uma expedição pela grandiosidade da Patagônia. Trekking em geleiras, escalada em montanhas e paisagens de tirar o fôlego. Uma jornada desafiadora e recompensadora.",
+    level: "Nômade Raiz",
+    whatsappMessage: "Olá, tenho interesse no pacote 'Expedição Patagônia: Geleiras e Montanhas'. Poderiam me dar mais informações?",
+  },
+];
+
+// Componente para exibir o card do pacote de viagem
+const PackageCard = ({ packageInfo }) => {
+  const handleWhatsAppClick = () => {
+    // Substitua '55DDNNNNNNNNN' pelo número de telefone da agência com DDD
+    // e 'DD' pelo código do país (ex: 55 para Brasil), 'NNNNNNNNN' pelo número
+    const phoneNumber = '5511999999999'; // Exemplo: 55 para Brasil, 11 para DDD, 999999999 para o número
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(packageInfo.whatsappMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6 mb-6 flex flex-col items-center text-center">
+      <h3 className="text-xl font-bold text-gray-800 mb-2">{packageInfo.name}</h3>
+      <p className="text-gray-600 mb-4">{packageInfo.description}</p>
+      <button
+        onClick={handleWhatsAppClick}
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+      >
+        <i className="fab fa-whatsapp mr-2"></i> Fale com um agente (WhatsApp)
+      </button>
+    </div>
+  );
+};
+
+// CSS como uma string para ser injetado via dangerouslySetInnerHTML
+const appStyles = `
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes bounceIn {
+  0%, 20%, 40%, 60%, 80%, 100% {
+    transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  0% {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  20% {
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+  40% {
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1.03);
+  }
+  80% {
+    transform: scale3d(0.97, 0.97, 0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+.animate-bounce-in {
+  animation: bounceIn 1s;
+}
+
+@keyframes pulse-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.button-gradient-pulse {
+  background-size: 200% 200%;
+  animation: pulse-gradient 5s ease infinite;
+}
+.bg-blue-600.button-gradient-pulse {
+  background-image: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
+}
+.bg-purple-600.button-gradient-pulse {
+  background-image: linear-gradient(90deg, #9333EA, #A78BFA, #9333EA);
+}
+`;
+
+
+// Componente principal do aplicativo
+const App = () => {
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [showResults, setShowResults] = useState(false);
+  const [userLevel, setUserLevel] = useState(null);
+  const [recommendedPackages, setRecommendedPackages] = useState([]);
+
+  // Função para iniciar o quiz
+  const startQuiz = () => {
+    setQuizStarted(true);
+    setCurrentQuestionIndex(0);
+    setTotalPoints(0);
+    setShowResults(false);
+    setUserLevel(null);
+    setRecommendedPackages([]);
+  };
+
+  // Função para lidar com a seleção de uma resposta
+  const handleAnswer = (points) => {
+    setTotalPoints((prevPoints) => prevPoints + points);
+    if (currentQuestionIndex < quizData.length - 1) {
+      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+    } else {
+      // Se for a última pergunta, calcula os resultados
+      calculateResults();
+    }
+  };
+
+  // Função para calcular o nível do viajante e recomendar pacotes
+  const calculateResults = () => {
+    // Determina o nível do viajante
+    const level = travelerLevels.find(
+      (lvl) => totalPoints >= lvl.minPoints && totalPoints <= lvl.maxPoints
+    );
+    setUserLevel(level);
+
+    // Filtra os pacotes recomendados com base no nível
+    const filteredPackages = travelPackages.filter(
+      (pkg) => pkg.level === level.name
+    );
+    setRecommendedPackages(filteredPackages);
+
+    setShowResults(true);
+  };
+
+  // Função para reiniciar o quiz
+  const resetQuiz = () => {
+    setQuizStarted(false);
+    setCurrentQuestionIndex(0);
+    setTotalPoints(0);
+    setShowResults(false);
+    setUserLevel(null);
+    setRecommendedPackages([]);
+  };
+
+  // Hook para carregar a fonte Inter e o Font Awesome
+  useEffect(() => {
+    const linkFont = document.createElement('link');
+    linkFont.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap';
+    linkFont.rel = 'stylesheet';
+    document.head.appendChild(linkFont);
+
+    const linkAwesome = document.createElement('link');
+    linkAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css';
+    linkAwesome.rel = 'stylesheet';
+    document.head.appendChild(linkAwesome);
+
+    // Define a fonte padrão para o body
+    document.body.style.fontFamily = 'Inter, sans-serif';
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-300 to-indigo-500 flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-6 drop-shadow-md">
+          Trilheiros Nativus
+        </h1>
+        <h2 className="text-2xl font-semibold text-gray-700 mb-8">
+          Descubra o seu Nível de Viajante!
+        </h2>
+
+        {!quizStarted && (
+          <div className="fade-in">
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Responda a algumas perguntas rápidas para descobrir qual tipo de viajante você é e encontre os pacotes perfeitos para suas próximas aventuras!
+            </p>
+            <button
+              onClick={startQuiz}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 button-gradient-pulse"
+            >
+              Iniciar Quiz
+            </button>
+          </div>
+        )}
+
+        {quizStarted && !showResults && (
+          <div className="quiz-section fade-in">
+            <p className="text-xl font-semibold text-blue-700 mb-4">
+              Pergunta {currentQuestionIndex + 1} de {quizData.length}
+            </p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">
+              {quizData[currentQuestionIndex].question}
+            </h3>
+            <div className="grid grid-cols-1 gap-4">
+              {quizData[currentQuestionIndex].options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswer(option.points)}
+                  className="bg-gray-100 hover:bg-blue-100 text-gray-800 font-semibold py-4 px-6 rounded-xl shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                >
+                  {option.text}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-6">
+              Pontuação atual: {totalPoints}
+            </p>
+          </div>
+        )}
+
+        {showResults && userLevel && (
+          <div className="results-section fade-in">
+            <h3 className="text-3xl font-bold text-blue-800 mb-4 animate-bounce-in">
+              Parabéns! Você é um(a) {userLevel.name}!
+            </h3>
+            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+              {userLevel.description}
+            </p>
+
+            <h4 className="text-2xl font-semibold text-gray-800 mb-4 mt-8">
+              Pacotes Recomendados para Você:
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recommendedPackages.length > 0 ? (
+                recommendedPackages.map((pkg) => (
+                  <PackageCard key={pkg.id} packageInfo={pkg} />
+                ))
+              ) : (
+                <p className="text-gray-600 col-span-full">
+                  Não encontramos pacotes específicos para o seu perfil. Entre em contato conosco para uma consultoria personalizada!
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={resetQuiz}
+              className="mt-8 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 button-gradient-pulse"
+            >
+              Fazer o quiz novamente
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Tailwind CSS (loaded via CDN for simplicity in this single-file example) */}
+      <script src="https://cdn.tailwindcss.com"></script>
+      {/* Estilos CSS incorporados usando dangerouslySetInnerHTML para compatibilidade com JSX */}
+      <style dangerouslySetInnerHTML={{ __html: appStyles }}></style>
+    </div>
+  );
+};
+
+export default App;
